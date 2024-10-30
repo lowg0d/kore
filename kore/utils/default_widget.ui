@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Kore Widget</class>
+ <widget class="QWidget" name="Kore Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>271</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Kore Widget</string>
+  </property>
+ </widget>
+ <resources>
+  <include location="../../assets/src.qrc"/>
+ </resources>
+ <connections/>
+</ui>

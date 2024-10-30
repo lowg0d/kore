@@ -25,9 +25,7 @@ setup(
         "Programming Language :: Python :: 3.9",
     ],
     python_requires=">=3.12",
-    install_requires=[
-        "PySide6",
-    ],
+    install_requires=["PySide6", "PySideSix-Frameless-Window", "click"],
     entry_points={
         "console_scripts": [
             "kore=kore.cli.cli:main",
