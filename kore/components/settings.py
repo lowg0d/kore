@@ -1,7 +1,9 @@
+import logging
 import re
 from ast import Dict
 from operator import methodcaller
 from sys import flags
+from tabnanny import check
 from typing import Any
 
 from PySide6.QtCore import (
@@ -104,7 +106,8 @@ class SettingFormWidget(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.setKeyAndData(key, data)
-        self.key = "settings." + key
+        self.key = key
+        self.log = logging.getLogger(f"config.'{data['name']}'")
 
         self.config = config_instance
 
@@ -116,6 +119,7 @@ class SettingFormWidget(QWidget):
         self.og_description = self.ui.description_label.text()
         self.flag_visible = True
         self.update_flag = True
+        self.custom_flag = f"{self.og_description} • {self.custom_flag}"
 
         self.function_map = {
             "str": self._setup_string,
@@ -131,32 +135,60 @@ class SettingFormWidget(QWidget):
             print(f"Type Not Valid '{_type}' in {self.ui.name_label.text()}")
             return
 
-        print(self.config.get(key), "settings.json")
+        self.initial_value = self.config.get(self.key, "settings")
 
         setup_function()
 
-    def _toggle_flag_visibility(self):
+    def _toggle_flag_visibility(self, value):
         if self.update_flag:
-            if self.flag_visible:
-                self.custom_flag = f"{self.og_description} • {self.custom_flag}"
-                self.ui.description_label.setText(self.custom_flag)
+            if self.initial_value == value:
+                self.ui.description_label.setText(self.og_description)
+                self.log.debug(f"showing '{self.custom_flag}'")
 
             else:
-                self.ui.description_label.setText(self.og_description)
 
-            self.update_flag = False
+                self.ui.description_label.setText(self.custom_flag)
+                self.log.debug(f"hiding '{self.custom_flag}'")
 
     def _update_data(self):
+        # Identify the sender widget
+        sender = self.sender()
+        new_value = None  # Initialize new_value
+
+        # Check custom flag status and toggle visibility
+
+        # Retrieve and validate new_value based on widget type
+        if isinstance(sender, QLineEdit):
+            new_value = sender.text()
+            self.log.debug(f"QLineEdit value: '{new_value}'")
+
+        elif isinstance(sender, QCheckBox):
+            new_value = sender.isChecked()
+            self.log.debug(f"QCheckBox value: '{new_value}'")
+
+        elif isinstance(sender, (QSpinBox, QDoubleSpinBox)):
+            new_value = sender.value()
+            self.log.debug(f"QSpinBox/QDoubleSpinBox value: '{new_value}'")
+
+        else:
+            self.log.warning(f"Unknown widget type: '{sender}'")
+            return
+
         if self.custom_flag:
-            self._toggle_flag_visibility()
+            self._toggle_flag_visibility(new_value)
+
+        # Set the new configuration if new_value is valid
+        self.config.put(self.key, new_value, "settings")
 
     def _setup_string(self):
         line_edit = QLineEdit(self.ui.container)
         line_edit.setObjectName("line_edit")
 
+        line_edit.setText(self.initial_value)
+
         line_edit.setFixedHeight(30)
         line_edit.setFixedWidth(200)
-        line_edit.setFocusPolicy(Qt.ClickFocus)
+        line_edit.setFocusPolicy(Qt.ClickFocus)  # type: ignore
 
         line_edit.textChanged.connect(self._update_data)
         self.ui.horizontalLayout.addWidget(line_edit)
@@ -165,11 +197,13 @@ class SettingFormWidget(QWidget):
     def _setup_bool(self):
         checkbox = QCheckBox(self.ui.container)
         checkbox.setObjectName("checkbox")
-        checkbox.setCursor(QCursor(Qt.PointingHandCursor))
+        checkbox.setCursor(QCursor(Qt.PointingHandCursor))  # type: ignore
+
+        checkbox.setChecked(self.initial_value)
 
         checkbox.setFixedHeight(30)
         checkbox.setFixedWidth(30)
-        checkbox.setFocusPolicy(Qt.ClickFocus)
+        checkbox.setFocusPolicy(Qt.ClickFocus)  # type: ignore
         checkbox.stateChanged.connect(self._update_data)
 
         self.ui.horizontalLayout.addWidget(checkbox)
@@ -181,10 +215,10 @@ class SettingFormWidget(QWidget):
 
         combo_box.setFixedHeight(30)
         combo_box.setFixedWidth(200)
-        combo_box.setFocusPolicy(Qt.ClickFocus)
+        combo_box.setFocusPolicy(Qt.ClickFocus)  # type: ignore
         combo_box.currentIndexChanged.connect(self._update_data)
 
-        combo_box.addItems(["test", "test2", "test3"])
+        combo_box.addItems(self.initial_value)
 
         self.ui.horizontalLayout.addWidget(combo_box)
         self.ui.verticalLayout.addWidget(self.ui.container)
@@ -192,11 +226,13 @@ class SettingFormWidget(QWidget):
     def _setup_int(self):
         spinbox = QSpinBox(self.ui.container)
         spinbox.setObjectName("spinbox")
-        spinbox.setCursor(QCursor(Qt.PointingHandCursor))
+        spinbox.setCursor(QCursor(Qt.PointingHandCursor))  # type: ignore
+
+        spinbox.setValue(self.initial_value)
 
         spinbox.setFixedHeight(30)
         spinbox.setFixedWidth(200)
-        spinbox.setFocusPolicy(Qt.ClickFocus)
+        spinbox.setFocusPolicy(Qt.ClickFocus)  # type: ignore
         spinbox.valueChanged.connect(self._update_data)
 
         self.ui.horizontalLayout.addWidget(spinbox)
@@ -205,11 +241,13 @@ class SettingFormWidget(QWidget):
     def _setup_float(self):
         spinbox = QDoubleSpinBox(self.ui.container)
         spinbox.setObjectName("doublespinbox")
-        spinbox.setCursor(QCursor(Qt.PointingHandCursor))
+        spinbox.setCursor(QCursor(Qt.PointingHandCursor))  # type: ignore
+
+        spinbox.setValue(self.initial_value)
 
         spinbox.setFixedHeight(30)
         spinbox.setFixedWidth(200)
-        spinbox.setFocusPolicy(Qt.ClickFocus)
+        spinbox.setFocusPolicy(Qt.ClickFocus)  # type: ignore
         spinbox.valueChanged.connect(self._update_data)
 
         self.ui.horizontalLayout.addWidget(spinbox)
@@ -221,7 +259,7 @@ class SettingFormWidget(QWidget):
 
         combo_box.setFixedHeight(30)
         combo_box.setFixedWidth(200)
-        combo_box.setFocusPolicy(Qt.ClickFocus)
+        combo_box.setFocusPolicy(Qt.ClickFocus)  # type: ignore
         combo_box.currentIndexChanged.connect(self._update_data)
 
         combo_box.addItems(["Theme", "Custom Type"])

@@ -117,7 +117,15 @@ class Config:
         """
         try:
             with open(path, mode="r", encoding="utf-8") as _file:
+                self.log.debug(f"'{path}' Loaded !")
                 return json.load(_file)
         except (json.JSONDecodeError, FileNotFoundError, OSError):
             self.log.error(f"Not able to read format from '{path}'")
             return {}
+
+    def runtime_load(self, path: str) -> Any:
+        file_name = path.replace(".json", "").replace("./", "")
+        data = self._load_json_file(path)
+        self.loaded_data[file_name] = data
+
+        self.log.debug(f"Loaded files: {self.loaded_data.keys()}")

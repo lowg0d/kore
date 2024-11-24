@@ -21,7 +21,7 @@ class DynamicConfigManager:
         self.config_path = config_path
 
         self.config_instance = config_instance
-        self.config_instance._load_json_file(path="./settings.json")
+        self.config_instance.runtime_load(path="./settings.json")
 
         self.settings_widget_class = settings_widget
         self.destination_layout = destination_layout
@@ -39,7 +39,9 @@ class DynamicConfigManager:
             label.setObjectName("category_title")
             self.destination_layout.addWidget(label)
             for key, data in setting.items():
-                widget = self.settings_widget_class(key, data, self.config_instance)
+                widget = self.settings_widget_class(
+                    f"{category}.{key}", data, self.config_instance
+                )
                 self.destination_layout.addWidget(widget)
 
     def _merge_settings(

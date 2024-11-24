@@ -89,8 +89,8 @@ class Interface(FramelessMainWindow):
 
     def mousePressEvent(self, event):
         # Clear focus when clicking anywhere outside of a widget
-        if event.button() == Qt.LeftButton:
-            self.centralWidget().setFocus(Qt.MouseFocusReason)
+        if event.button() == Qt.LeftButton:  # type:ignore
+            self.centralWidget().setFocus(Qt.MouseFocusReason)  # type:ignore
         super().mousePressEvent(event)
 
     def show(self):

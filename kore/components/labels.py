@@ -11,7 +11,9 @@ class LinkHoverLabel(QLabel):
         self.linkHovered.connect(self.handleLinkHovered)
 
     def handleLinkHovered(self, link):
+        print("Hello")
         if link:
             QToolTip.showText(QCursor.pos(), link)
+            print("GHello")
         else:
             QToolTip.hideText()
